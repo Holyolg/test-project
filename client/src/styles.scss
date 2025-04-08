@@ -111,6 +111,7 @@ button,
 [type="reset"],
 [type="submit"] {
   -webkit-appearance: button;
+  appearance: button;
 }
 
 button::-moz-focus-inner,
@@ -162,6 +163,7 @@ textarea {
 
 [type="search"] {
   -webkit-appearance: textfield;
+  appearance: textfield;
   outline-offset: -2px;
 }
 
@@ -226,13 +228,10 @@ ul, li {
 .list-item {
   background-color: #dcdbdb;
   border-radius: 8px;
-
-  & > a {
-    padding: 16px;
-    display: flex;
+  padding: 16px;
+  display: flex;
     flex-direction: column;
     row-gap: 8px;
-  }
 
   * {
     text-decoration: none;
@@ -257,4 +256,10 @@ ul, li {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.virtual-list {
+ overflow-y: scroll;
+ scrollbar-width: none;
+ -ms-overflow-style: none;
 }

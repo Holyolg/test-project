@@ -1,65 +1,64 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ListItem } from './components';
-import useData from './useData';
-import useSort from './useSort';
+import React, { useCallback, useMemo, useState,  } from 'react';
+import { ListItem, SubTitle, VirtualList } from '../components';
+import { useData, useSort, useDebounce } from '../hooks';
 
-const SubTitle: React.FC<any> = ({children}) => (
-    <h2 className={'list-subtitle'}>Active Item ID: {children}</h2>
-)
-
-function ListPage() {
-    const items = useData();
+const ListPage: React.FC = () => {
+    const {items, loading, error} = useData();
     const [sortedItems, sortBy, handleSortClick] = useSort(items);
     
-    const [activeItemId,  setActiveItemId] = useState<any>(null);
-    const [filteredItems, setFilteredItems] = useState<any[]>([]);
+    const [activeItemId, setActiveItemId] = useState<number | null>(null);
     const [query, setQuery] = useState<string>('');
     
-    const activeItemText = useMemo(() => activeItemId ? activeItemId : 'Empty', []);
+    const debouncedQuery = useDebounce(query, 200);
+
+    const handleItemClick = useCallback((id: number | null) => {
+        setActiveItemId(id);
+    }, []);
     
-  const handleItemClick = (id: any) => {
-    setActiveItemId(id);
-  };
-  
-  const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      setQuery(event.target.value);
-  }
+    const handleQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        setQuery(event.target.value);
+    }, []);
+
+    const filteredItems = useMemo(() => {
+        if (!debouncedQuery) return sortedItems;
     
-    useEffect(() => {
-        setFilteredItems(sortedItems);
-    }, [sortedItems]);
-  
-    useEffect(() => {
-        if (query.length > 0) {
-            setFilteredItems(filteredItems.filter(item => `${item.id}`.includes(query.toLowerCase().trimStart().trimEnd().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))));
-        }
-    }, [query, filteredItems]);
+        const safeQuery = query.toLowerCase();
+        return sortedItems.filter((item) =>
+          `${item.id}`.toLowerCase().includes(safeQuery)
+        );
+      }, [sortedItems, query]);
 
   return (
-    <div className={'list-wrapper'}>
+    <div className="list-wrapper">
         <div className="list-header">
-            <h1 className={'list-title'}>Items List</h1>
-            <SubTitle>{activeItemText}</SubTitle>
+            <h1 className="list-title">Items List</h1>
+            <SubTitle>{activeItemId ?? 'Empty'}</SubTitle>
             <button onClick={handleSortClick}>Sort ({sortBy === 'ASC' ? 'ASC' : 'DESC'})</button>
-            <input type="text" placeholder={'Filter by ID'} value={query} onChange={handleQueryChange} />
+            <input type="number" placeholder={'Filter by ID'} value={query} onChange={handleQueryChange} />
         </div>
         <div className="list-container">
-            <div className="list">
-                {filteredItems.length === 0 && <span>Loading...</span>}
-                {filteredItems.map((item, index) => (
-                    <ListItem
-                        key={index}
-                        isactive={activeItemId===item.id}
-                        id={item.id}
-                        name={item.name}
-                        description={item.description}
-                        onClick={handleItemClick}
-                    />
-                ))}
-            </div>
-        </div>
+        <ul className="list">
+          {loading && <span>Loading...</span>}
+          {error && <span className="error">Error: {error}</span>}
+          {!loading && !error && filteredItems.length === 0 && <span>No results</span>}
+          <VirtualList
+  items={filteredItems}
+  itemHeight={150}
+  renderItem={(item) => (
+    <ListItem
+      key={item.id}
+      id={item.id}
+      name={item.name}
+      description={item.description}
+      isActive={item.id === activeItemId}
+      onClick={handleItemClick}
+    />
+  )}
+/>
+        </ul>
+      </div>
     </div>
   );
-}
+};
 
 export default ListPage;

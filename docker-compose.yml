@@ -20,5 +20,5 @@ services:
     ports:
       - "${DOCKER_SERVER_PORT}:${DOCKER_SERVER_PORT}"
     volumes:
-      - "./server:/app"
+      - ./server:/app
     command: ["./run.sh"]
